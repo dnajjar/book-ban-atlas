@@ -62,7 +62,7 @@
       width: 100%;
       border-collapse: collapse;
       font-family: Arial, sans-serif;
-      font-size: 10px;
+      font-size: 14px;
       color: #333;
     }
 
@@ -136,12 +136,17 @@
       [24.396308, -125.0],
       [49.384358, -66.93457]
     );
-    const map = L.map('map', {
-      maxBounds: usBounds,
-      maxBoundsViscosity: 1.0,
-      minZoom: 4,
-      maxZoom: 10
-    }).setView([37.8, -96], 4);
+
+    const eastCoastBounds = L.latLngBounds(
+    [24.396308, -82.0], // Southwest corner (Key West, Florida)
+    [40.712776, -70.0]  // Northeast corner (New York City, NY)
+  );
+
+  const map = L.map('map', {
+    maxBoundsViscosity: 1.0,    // Optional: Sticky bounds
+    minZoom: 4,
+    maxZoom: 10
+  }).setView([34.0, -86.0], 5);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 10,
@@ -157,7 +162,7 @@
       return "#ff0000";
     }
 
-    fetch('districts_with_ban_counts.geojson')
+    fetch('./geojson/districts_with_ban_counts.geojson')
       .then(response => response.json())
       .then(geojsonData => {
         const legend = L.control({ position: 'bottomright' });
