@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>School Book Ban Atlas</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    .awesomplete {
+      z-index: 1000;
+      width: 100%;
+      max-width: 500px;
+      top: 100%;
+      left: 0;
+    }
+
+    #search-container {
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 20px;
+      z-index: 1001;
+    }
+
+    #search-field {
+      width: 500px;
+      height: 20px;
+      font-size: 14px;
+      padding: 10px;
+      border: 2px solid #ccc;
+      z-index: 1001;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    #results {
+      width: 100%;
+      max-width: 800px;
+      margin-top: 20px;
+    }
+
+    .table-wrapper {
+      overflow: auto;
+      max-height: 25rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      color: #333;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      font-weight: bold;
+      top: 0;
+      z-index: 2;
+      background: #f4f4f4;
+      border-bottom: 2px solid #ddd;
+    }
+
+    #map {
+      width: 100%;
+      max-width: 800px;
+      height: 400px;
+      margin: 20px auto;
+      border: none;
+      border-radius: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    body #map .leaflet-container {
+      background: #fff !important;
+      background-color: #fff !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="search-container">
+    <h3>School Book Ban Atlas</h3>
+    <input id="search-field" class="awesomplete" placeholder="Search by book title, author, state or school district" />
+  </div>
+  <div id="results"></div>
+  <script type="module">
+    import { renderResultsTable } from './resultsTable.js';
+    fetch('search_data.json')
+      .then(response => response.json())
+      .then(data => {
+        const input = document.getElementById("search-field");
+        const awesomplete = new Awesomplete(input, {
+          minChars: 1,
+          list: data.map(item => ({ label: `${item.value} - ${item.type}`, value: item.value })),
+          item: function(suggestion, input) {
+            const label = suggestion.label || suggestion.value;
+            return Awesomplete.ITEM(`${label}`, input);
+          },
+          replace: function(suggestion) {
+            this.input.value = suggestion.value;
+          }
+        });
+
+        input.addEventListener("awesomplete-selectcomplete", function(event) {
+          const query = event.text.value;
+          const result = data.find(item => item.value.toLowerCase() === query.toLowerCase());
+
+          const resultsContainer = document.getElementById("results");
+          renderResultsTable(result, "results");
+        });
+      });
+  </script>
+  <div id="map"></div>
+  <script>
+    const usBounds = L.latLngBounds(
+      [24.396308, -125.0],
+      [49.384358, -66.93457]
+    );
+    const map = L.map('map', {
+      maxBounds: usBounds,
+      maxBoundsViscosity: 1.0,
+      minZoom: 4,
+      maxZoom: 10
+    }).setView([37.8, -96], 4);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 10,
+    }).addTo(map);
+
+    function getColor(banCount, maxBan) {
+      const t = banCount / maxBan;
+      if (t === 0) return "#f5f5f5";
+      if (t < 0.2) return "#cfff04";
+      if (t < 0.4) return "#39FF14";
+      if (t < 0.6) return "#ffa500";
+      if (t < 0.8) return "#ff474C";
+      return "#ff0000";
+    }
+
+    fetch('districts_with_ban_counts.geojson')
+      .then(response => response.json())
+      .then(geojsonData => {
+        const legend = L.control({ position: 'bottomright' });
+        const maxBan = Math.max(...geojsonData.features.map(f => f.properties.ban_count || 0));
+
+        legend.onAdd = function(map) {
+          const div = L.DomUtil.create('div', 'info legend');
+          const steps = 6; // Number of steps in the legend
+          const breakpoints = Array.from({ length: steps + 1 }, (_, i) => Math.round((maxBan / steps) * i));
+
+          div.innerHTML = '<strong>Bans</strong><br>';
+
+          // Add the first box for "0"
+          div.innerHTML += `
+            <i style="background:${getColor(0, maxBan)}; width: 18px; height: 18px; display: inline-block; margin-right: 8px;"></i>
+            0<br>
+          `;
+
+          // Add the remaining ranges
+          for (let i = 1; i < breakpoints.length - 1; i++) {
+            const color = getColor(breakpoints[i], maxBan);
+            div.innerHTML += `
+              <i style="background:${color}; width: 18px; height: 18px; display: inline-block; margin-right: 8px;"></i>
+              ${breakpoints[i]}&ndash;${breakpoints[i + 1]}<br>
+            `;
+          }
+
+          return div;
+        };
+
+        legend.addTo(map);
+
+        L.geoJSON(geojsonData, {
+          style: feature => ({
+            fillColor: getColor(feature.properties.ban_count || 0, maxBan),
+            weight: 0.5,
+            opacity: 0.3,
+            color: '#bbb',
+            fillOpacity: 1
+          }),
+          onEachFeature: (feature, layer) => {
+            layer.bindPopup(`${feature.properties.NAME} <br> ${feature.properties.ban_count || 0} bans`);
+          }
+        }).addTo(map);
+      });
+  </script>
+</body>
+</html>
