@@ -38,8 +38,9 @@ for _, row in csv_data.iterrows():
                 "details": []
             }
         search_data[key]["details"].append({
+            "book": row["Title"],
             "author": row["Author"],
-            "state": row["State"],
+            "state": row["State"],  # Add state here
             "district": row["District"],
             "date_of_challenge": row["Date of Challenge/Removal"],
             "ban_status": row["Ban Status"],
@@ -57,7 +58,8 @@ for _, row in csv_data.iterrows():
             }
         search_data[key]["details"].append({
             "book": row["Title"],
-            "state": row["State"],
+            "author": row["Author"],
+            "state": row["State"],  # Add state here
             "district": row["District"],
             "date_of_challenge": row["Date of Challenge/Removal"],
             "ban_status": row["Ban Status"],
@@ -76,7 +78,8 @@ for _, row in csv_data.iterrows():
         search_data[key]["details"].append({
             "book": row["Title"],
             "author": row["Author"],
-            "state": row["State"],
+            "state": row["State"],  # Add state here
+            "district": row["District"],
             "date_of_challenge": row["Date of Challenge/Removal"],
             "ban_status": row["Ban Status"],
         })
@@ -94,11 +97,11 @@ for _, row in csv_data.iterrows():
         search_data[key]["details"].append({
             "book": row["Title"],
             "author": row["Author"],
+            "state": row["State"],  # Make sure state is here too
             "district": row["District"],
             "date_of_challenge": row["Date of Challenge/Removal"],
             "ban_status": row["Ban Status"],
         })
-
 # Convert to a list and save to JSON
 search_data_list = list(search_data.values())
 output_path = "search_data.json"

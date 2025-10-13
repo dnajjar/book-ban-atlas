@@ -6,6 +6,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+  <script type="text/javascript" src="https://www.google.com/books/jsapi.js"></script>
   <style>
     body {
       display: flex;
@@ -95,19 +96,116 @@
       background: #fff !important;
       background-color: #fff !important;
     }
+    .sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sortable:hover {
+      background-color: #f0f0f0;
+    }
+
+    .sortable::after {
+      content: '  \2191 \2193';
+      font-size: 0.8em;
+      margin-left: 5px;
+      color: #999;
+    }
+
+    .sortable.asc::after {
+      content: '\2191';
+      color: #333;
+    }
+
+    .sortable.desc::after {
+      content: '\2193';
+      color: #333;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 20px 0;
+      gap: 15px;
+    }
+
+    .pagination button {
+      padding: 8px 16px;
+      border: 1px solid #ccc;
+      background: white;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .pagination button:disabled {
+      background: #f5f5f5;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: #f0f0f0;
+    }
+
+    .page-info {
+      font-weight: bold;
+    }
+    .description {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #007bff;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.description a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.description a:hover {
+  text-decoration: underline;
+}
   </style>
 </head>
 <body>
+  <div class="description">
+    <p>This tool allows you to view all banned books from 2022-2025 based on data from <a href="https://pen.org/book-bans/" target="_blank">PEN America</a>. Search by book title, author, state, or school district to explore book challenges and bans across the United States.</p>
+  </div>
+  
   <div id="search-container">
     <h3>School Book Ban Atlas</h3>
     <input id="search-field" class="awesomplete" placeholder="Search by book title, author, state or school district" />
   </div>
   <div id="results"></div>
+  
   <script type="module">
     import { renderResultsTable } from './resultsTable.js';
+    import { initializeMap } from './map.js';
+
+      google.books.load();
+
+      function initialize() {
+        var viewer = new google.books.DefaultViewer(document.getElementById('viewerCanvas'));
+        viewer.load('ISBN:0738531367');
+      }
+
+      google.books.setOnLoadCallback(initialize);
+    
+    initializeMap();
     fetch('search_data.json')
       .then(response => response.json())
       .then(data => {
+        const allData = {
+          value: "All Books",
+          type: "", 
+          details: data.flatMap(item => item.details || [])
+        };
+      
+      // Render table with all data initially
+        renderResultsTable(allData, "results", true);
         const input = document.getElementById("search-field");
         const awesomplete = new Awesomplete(input, {
           minChars: 1,
@@ -126,88 +224,10 @@
           const result = data.find(item => item.value.toLowerCase() === query.toLowerCase());
 
           const resultsContainer = document.getElementById("results");
-          renderResultsTable(result, "results");
+          renderResultsTable(result, "results", true);
         });
       });
   </script>
   <div id="map"></div>
-  <script>
-    const usBounds = L.latLngBounds(
-      [24.396308, -125.0],
-      [49.384358, -66.93457]
-    );
-
-    const eastCoastBounds = L.latLngBounds(
-    [24.396308, -82.0], // Southwest corner (Key West, Florida)
-    [40.712776, -70.0]  // Northeast corner (New York City, NY)
-  );
-
-  const map = L.map('map', {
-    maxBoundsViscosity: 1.0,    // Optional: Sticky bounds
-    minZoom: 4,
-    maxZoom: 10
-  }).setView([34.0, -86.0], 5);
-
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 10,
-    }).addTo(map);
-
-    function getColor(banCount, maxBan) {
-      const t = banCount / maxBan;
-      if (t === 0) return "#f5f5f5";
-      if (t < 0.2) return "#cfff04";
-      if (t < 0.4) return "#39FF14";
-      if (t < 0.6) return "#ffa500";
-      if (t < 0.8) return "#ff474C";
-      return "#ff0000";
-    }
-
-    fetch('./geojson/districts_with_ban_counts.geojson')
-      .then(response => response.json())
-      .then(geojsonData => {
-        const legend = L.control({ position: 'bottomright' });
-        const maxBan = Math.max(...geojsonData.features.map(f => f.properties.ban_count || 0));
-
-        legend.onAdd = function(map) {
-          const div = L.DomUtil.create('div', 'info legend');
-          const steps = 6; // Number of steps in the legend
-          const breakpoints = Array.from({ length: steps + 1 }, (_, i) => Math.round((maxBan / steps) * i));
-
-          div.innerHTML = '<strong>Bans</strong><br>';
-
-          // Add the first box for "0"
-          div.innerHTML += `
-            <i style="background:${getColor(0, maxBan)}; width: 18px; height: 18px; display: inline-block; margin-right: 8px;"></i>
-            0<br>
-          `;
-
-          // Add the remaining ranges
-          for (let i = 1; i < breakpoints.length - 1; i++) {
-            const color = getColor(breakpoints[i], maxBan);
-            div.innerHTML += `
-              <i style="background:${color}; width: 18px; height: 18px; display: inline-block; margin-right: 8px;"></i>
-              ${breakpoints[i]}&ndash;${breakpoints[i + 1]}<br>
-            `;
-          }
-
-          return div;
-        };
-
-        legend.addTo(map);
-
-        L.geoJSON(geojsonData, {
-          style: feature => ({
-            fillColor: getColor(feature.properties.ban_count || 0, maxBan),
-            weight: 0.5,
-            opacity: 0.3,
-            color: '#bbb',
-            fillOpacity: 1
-          }),
-          onEachFeature: (feature, layer) => {
-            layer.bindPopup(`${feature.properties.NAME} <br> ${feature.properties.ban_count || 0} bans`);
-          }
-        }).addTo(map);
-      });
-  </script>
 </body>
 </html>
