@@ -70,7 +70,43 @@ export function renderResultsTable(result, containerId = "results", showAllColum
     const endIndex = startIndex + itemsPerPage;
     const pageData = sortedDetails.slice(startIndex, endIndex);
 
+    // Show author statistics if this is an author search
+    let authorStatsHTML = '';
+    if (result.type === 'author' && result.author_stats) {
+      const stats = result.author_stats;
+      authorStatsHTML = `
+        <div class="author-stats">
+          <h4>📚 ${result.value} - Author Statistics</h4>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-number">${stats.unique_books_banned || 0}</span>
+              <span class="stat-label">Unique Books Banned</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">${stats.total_ban_instances || 0}</span>
+              <span class="stat-label">Total Ban Instances</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">${stats.states_with_bans || 0}</span>
+              <span class="stat-label">States with Bans</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">${stats.districts_with_bans || 0}</span>
+              <span class="stat-label">Districts with Bans</span>
+            </div>
+          </div>
+          ${stats.banned_books && stats.banned_books.length > 0 ? `
+            <div class="banned-books-list">
+              <strong>Banned Books by ${result.value}:</strong><br>
+              ${stats.banned_books.join(', ')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
     let tableHTML = `
+      ${authorStatsHTML}
       <div>
         <h4>${result.value} - ${result.type.charAt(0).toUpperCase() + result.type.slice(1)}</h4>
         <p>Showing ${startIndex + 1}-${Math.min(endIndex, sortedDetails.length)} of ${sortedDetails.length} results</p>
@@ -121,16 +157,27 @@ export function renderResultsTable(result, containerId = "results", showAllColum
         </tr>
       `).join("");
     } else {
-      tableHTML += pageData.map(detail => `
-        <tr>
-          ${detail.author ? `<td>${detail.author}</td>` : ""}
-          ${detail.book ? `<td>${detail.book}</td>` : ""}
-          ${result.type !== "state" ? `<td>${detail.state || "Unknown"}</td>` : ""}
-          <td>${detail.district || "Unknown"}</td>
-          <td>${detail.date_of_challenge || "Unknown"}</td>
-          <td>${detail.ban_status || "Unknown"}</td>
-        </tr>
-      `).join("");
+      tableHTML += pageData.map(detail => {
+        let row = "<tr>";
+        
+        // Add cells in the same order as headers
+        if (result.type === "book" || result.type === "state") {
+          row += `<td>${detail.author || "Unknown"}</td>`;
+        }
+        if (result.type === "author" || result.type === "state") {
+          row += `<td>${detail.book || "Unknown"}</td>`;
+        }
+        if (result.type !== "state") {
+          row += `<td>${detail.state || "Unknown"}</td>`;
+        }
+        
+        row += `<td>${detail.district || "Unknown"}</td>`;
+        row += `<td>${detail.date_of_challenge || "Unknown"}</td>`;
+        row += `<td>${detail.ban_status || "Unknown"}</td>`;
+        row += "</tr>";
+        
+        return row;
+      }).join("");
     }
 
     tableHTML += `
