@@ -4,7 +4,7 @@
   <title>School Book Ban Atlas</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
@@ -45,7 +45,7 @@
             </div>
             
             <div class="top-list">
-              <h4>Top 10 Most Banned Authors</h4>
+              <h4> Top 10 Most Banned Authors</h4>
               <div id="top-authors" class="list-container">
                 Loading...
               </div>
@@ -61,16 +61,25 @@
             </div>
             
             <div class="top-list">
+              <h4>Top 10 Most Common Themes</h4>
+              <div id="top-themes" class="list-container">
+                Loading...
+              </div>
+            </div>
+          </div>
+          
+          <div class="top-lists-container">
+            <div class="top-list">
               <h4>Top 10 Districts with Most Bans</h4>
               <div id="top-districts" class="list-container">
                 Loading...
               </div>
             </div>
           </div>
+          
         </div>
       </div>
     </div>
-    
     <!-- Map Tab Content -->
     <div id="map-tab" class="tab-content">
       <div id="map"></div>
@@ -78,9 +87,9 @@
   </div>
 
   <script type="module">
-    import { renderResultsTable } from './resultsTable.js';
-    import { initializeMap } from './map.js';
-    import { renderExploreTab } from './explore.js';
+    import { renderResultsTable } from './js/resultsTable.js';
+    import { initializeMap } from './js/map.js';
+    import { renderExploreTab } from './js/explore.js';
     
     let mapInitialized = false;
     let exploreInitialized = false;
@@ -117,18 +126,29 @@
       }
     };
     
-    // Load search data
-    fetch('search_data.json')
-      .then(response => response.json())
+    // Load search data with debugging
+    console.log('Loading search data...');
+    fetch('./data/search_data.json')
+      .then(response => {
+        console.log('Search data response status:', response.status);
+        return response.json();
+      })
       .then(data => {
+        console.log('Search data loaded successfully:', data?.length, 'items');
+        console.log('Sample item:', data?.[0]);
+        
         window.searchData = data; // Store globally for explore tab
         
         const allData = {
           value: "All Books",
           type: "all", 
-          details: data.flatMap(item => item.details || [])
+          details: data.flatMap(item => {
+            console.log('Processing item:', item.type, item.value, 'with', item.details?.length, 'details');
+            return item.details || [];
+          })
         };
-        
+                
+        // Render table with all data initially
         renderResultsTable(allData, "results", true);
         
         const input = document.getElementById("search-field");
@@ -143,21 +163,33 @@
             this.input.value = suggestion.value;
           }
         });
-
+  
         input.addEventListener("awesomplete-selectcomplete", function(event) {
+          console.log('Search selected:', event.text.value);
           const query = event.text.value;
           const result = data.find(item => item.value.toLowerCase() === query.toLowerCase());
-          renderResultsTable(result, "results", true);
+          console.log('Found result:', result);
+          if (result) {
+            renderResultsTable(result, "results", true);
+          }
         });
-
+  
         input.addEventListener("input", function() {
           if (this.value.trim() === '') {
+            console.log('Search cleared, showing all data');
             renderResultsTable(allData, "results", true);
           }
         });
       })
       .catch(error => {
-        console.error('Error loading data:', error);
+        console.error('Error loading search data:', error);
+        document.getElementById('results').innerHTML = `
+          <div style="padding: 20px; background: #ffe6e6; border: 1px solid #ff0000; border-radius: 5px;">
+            <h3>Error Loading Data</h3>
+            <p>Could not load search_data.json. Error: ${error.message}</p>
+            <p>Please check that the file exists and is valid JSON.</p>
+          </div>
+        `;
       });
   </script>
 </body>
