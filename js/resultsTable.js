@@ -169,7 +169,7 @@ if (result.type === 'author' && result.author_stats) {
             `<a href="${workUrl}" target="_blank" class="book-title-link">${result.value}</a>` : 
             result.value
           }</h4>
-          ${author && author !== 'Unknown' ? `<p class="book-author">by ${author}</p>` : ''}
+          ${author && author !== 'Unknown' ? `<p class="book-author">by ${formatAuthorName(author)}</p>` : ''}
           ${publishYear ? `<p class="book-year">Published: ${publishYear}</p>` : ''}
           ${themes ? `<div class="book-themes">${formatThemes(themes)}</div>` : ''}
         </div>
