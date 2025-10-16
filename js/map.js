@@ -1,20 +1,33 @@
 export function initializeMap() {
+  const mapContainer = document.getElementById('map');
+  
+  // Show loading indicator for map
+  mapContainer.innerHTML = `
+    <div class="map-loading-indicator">
+      <div class="loading-spinner"></div>
+      <p>Loading map data...</p>
+    </div>
+  `;
 
-    const usBounds = L.latLngBounds(
-      [24.396308, -125.0],
-      [49.384358, -66.93457]
-    );
+  const usBounds = L.latLngBounds(
+    [24.396308, -125.0],
+    [49.384358, -66.93457]
+  );
 
-    const eastCoastBounds = L.latLngBounds(
+  const eastCoastBounds = L.latLngBounds(
     [24.396308, -82.0], // Southwest corner (Key West, Florida)
     [40.712776, -70.0]  // Northeast corner (New York City, NY)
   );
 
-  const map = L.map('map', {
-    maxBoundsViscosity: 1.0,    // Optional: Sticky bounds
-    minZoom: 4,
-    maxZoom: 10
-  }).setView([39.8283, -98.5795], 4);
+  // Clear the loading indicator and create the map
+  setTimeout(() => {
+    mapContainer.innerHTML = ''; // Clear loading indicator
+    
+    const map = L.map('map', {
+      maxBoundsViscosity: 1.0,    // Optional: Sticky bounds
+      minZoom: 4,
+      maxZoom: 10
+    }).setView([39.8283, -98.5795], 4);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 10,
@@ -72,8 +85,18 @@ export function initializeMap() {
             fillOpacity: 1
           }),
           onEachFeature: (feature, layer) => {
-            layer.bindPopup(`${feature.properties.NAME} <br> ${feature.properties.ban_count || 0} bans`);
+            layer.bindPopup(`${feature.properties.LEA_NAME || feature.properties.NAME} <br> ${feature.properties.ban_count || 0} bans`);
           }
         }).addTo(map);
+      })
+      .catch(error => {
+        console.log('Map data not available:', error);
+        mapContainer.innerHTML = `
+          <div class="map-error">
+            <h3>Map Data Not Available</h3>
+            <p>Could not load district ban data.</p>
+          </div>
+        `;
       });
+  }, 100); // Small delay to show loading indicator
 }
