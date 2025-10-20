@@ -6,7 +6,7 @@ import pandas as pd
 from typing import Dict, List, Optional, Set
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
-
+#science, mythology
 class BookInfoEnhancer:
     """Enhanced book information retrieval and theme identification system."""
     
@@ -55,10 +55,6 @@ class BookInfoEnhancer:
                 'lgbt', 'gay', 'lesbian', 'transgender', 'queer', 'homosexual', 'bisexual',
                 'gender identity', 'sexual orientation', 'same-sex', 'two-spirit', 'nonbinary',
                 'coming out', 'closet', 'pride', 'rainbow', 'gender dysphoria',
-                # Content-based title patterns
-                'simon vs', 'aristotle and dante', 'cemetery boys', 'felix ever after',
-                'last night at the telegraph club', 'you should see me in a crown',
-                'the miseducation of cameron post', 'king and the dragonflies'
             ],
             
             'Race & Racism': [
@@ -67,20 +63,29 @@ class BookInfoEnhancer:
                 'african american', 'black history', 'jim crow', 'segregation', 'lynch',
                 'white supremacy', 'racial injustice', 'police brutality', 'racial profiling',
                 'plantation', 'confederate', 'kkk', 'apartheid', 'ethnic cleansing',
-                # Content-based title patterns
-                'the hate u give', 'dear martin', 'all american boys', 'ghost boys',
-                'new kid', 'stamped', 'brown girl dreaming', 'the crossover'
             ],
             
             'Hispanic & Latino': [
                 # Cultural and identity terms
                 'hispanic', 'latino', 'latina', 'latinx', 'chicano', 'chicana',
                 'mexican american', 'puerto rican', 'cuban american', 'central american',
-                'south american', 'spanish speaking', 'bilingual', 'immigration',
+                'south american', 'spanish speaking',
                 'border crossing', 'undocumented', 'deportation', 'migrant',
                 'día de los muertos', 'quinceañera', 'barrio', 'mestizo'
             ],
-            
+            'Environmental Issues': [
+                'environment', 'environmental', 'climate change', 'cimate', 'global warming', 'pollution',
+                'conservation', 'sustainability', 'renewable energy', 'fossil fuels', 'carbon emissions',
+                'deforestation', 'endangered species', 'extinction', 'biodiversity', 'ecosystem',
+                'recycling', 'waste management', 'toxic waste', 'nuclear waste', 'oil spill',
+                'air pollution', 'water pollution', 'smog', 'greenhouse gases', 'ozone layer',
+                'renewable resources', 'solar energy', 'wind energy', 'hydroelectric',
+                'environmental activism', 'earth day', 'green movement', 'environmentalism',
+                'nature conservation', 'wildlife protection', 'habitat destruction',
+                'industrial pollution', 'pesticides', 'chemicals', 'acid rain',
+                'natural disasters', 'flooding', 'drought', 'hurricanes', 'wildfires',
+                'environmental justice', 'climate crisis', 'carbon footprint', 'eco-friendly'
+            ],
             'Asian': [
                 # Cultural and identity terms
                 'asian', 'asian american', 'chinese', 'japanese', 'korean', 'vietnamese',
@@ -122,7 +127,7 @@ class BookInfoEnhancer:
                 'fifty shades', 'court of', 'throne of glass'
             ],
             
-            'Violence': [
+            'War and Violence': [
                 'violence', 'war', 'death', 'murder', 'abuse', 'domestic violence',
                 'assault', 'rape', 'torture', 'genocide', 'holocaust', 'killing',
                 'blood', 'brutal', 'savage', 'massacre', 'terrorism', 'bombing',
@@ -141,7 +146,6 @@ class BookInfoEnhancer:
                 'self-harm', 'eating disorder', 'ptsd', 'bipolar', 'schizophrenia',
                 'therapy', 'counseling', 'medication', 'psychiatric', 'psychologist',
                 'cutting', 'anorexia', 'bulimia', 'panic attack',
-                'thirteen reasons why', 'it\'s kind of a funny story'
             ],
             
             'Politics': [
@@ -172,72 +176,78 @@ class BookInfoEnhancer:
                 'detox', 'withdrawal', 'dealer', 'drug dealing'
             ],
             
-            'Social Issues': [
+            'Social Justice': [
                 'poverty', 'homelessness', 'bullying', 'social justice', 'inequality',
                 'class struggle', 'economic disparity', 'social problems',
                 'injustice', 'oppression', 'human rights', 'social activism',
                 'cyberbullying', 'discrimination', 'marginalization'
-            ]
+            ],
+            'Incarceration': [
+                'prison', 'jail', 'incarceration', 'incarcerated', 'imprisoned', 'detention',
+                'correctional facility', 'penitentiary', 'lockup', 'behind bars',
+                'criminal justice system', 'mass incarceration', 'wrongful conviction',
+                'prison system', 'juvenile detention', 'reform school', 'reformatory',
+                'chain gang', 'solitary confinement', 'death row', 'life sentence',
+                'parole', 'probation', 'released from prison', 'ex-convict', 'felon',
+                'court case', 'trial', 'guilty verdict', 'sentencing', 'appeals court'
+            ],
+            'Feminism': [
+                'feminism', 'femindefist', 'women', 'gender equality', 'women\'s liberation',
+                'suffrage', 'suffragette', 'reproductive rights', 'women\'s suffrage',
+                'glass ceiling', 'wage gap', 'equal pay','planned parenthood', 'abortion rights', 'reproductive choice',
+                'women\'s empowerment', 'gender discrimination', 'sexual harassment',
+                'workplace equality', 'women in leadership', 'patriarchy', 'misogyny',
+                'body autonomy', 'women\'s health', 'feminist literature', 'feminist theory',
+                'feminism', 'women\'s history', 'women\'s studies'
+            ],
+            'Immigration': [
+                'immigration', 'immigrant', 'emigration', 'migration', 'refugee',
+                'border crossing', 'deportation', 'undocumented', 'illegal immigrant',
+                'green card', 'citizenship', 'naturalization', 'visa', 'passport',
+                'ellis island', 'border patrol', 'ice', 'homeland security',
+                'american dream', 'cultural assimilation', 'language barrier',
+                'immigrant family', 'separated families', 'detention center',
+                'xenophobia', 'nativism', 'discrimination against immigrants',
+                'multicultural', 'melting pot', 'diversity', 'ethnic community',
+                'first generation', 'second generation', 'bicultural identity',
+                'journey to america', 'leaving homeland', 'new country',
+                'immigration policy', 'immigration reform', 'sanctuary city',
+                'migrant worker', 'seasonal worker', 'migrant rights',
+                'human trafficking', 'coyote', 'border wall', 'border security'
+            ],
         }
     
     def _search_openlibrary(self, title: str, author: str = None) -> Optional[Dict]:
         """
         Search OpenLibrary API for book information by title and optionally author.
         Handles titles with colons by trying both full title and title before colon.
-        
-        Args:
-            title: Book title to search for
-            author: Author name to help narrow search results
-            
-        Returns:
-            Dict with book data from OpenLibrary, or None if not found
+        Includes retry logic for network timeouts.
         """
-        self._rate_limit_request()  # Apply rate limiting
+        import time
         
-        try:
-            # First try the full title with author if provided
-            search_url = "https://openlibrary.org/search.json"
-            params = {'title': title, 'limit': 5}  # Increased limit to find better matches
-            
-            if author and author != "Unknown":
-                params['author'] = author
-            
-            response = self.session.get(search_url, params=params, timeout=10)
-            response.raise_for_status()
-            search_data = response.json()
-            
-            # If we have results, try to find the best match
-            if search_data.get('docs') and len(search_data['docs']) > 0:
-                books = search_data['docs']
+        max_retries = 3
+        base_delay = 1  # Start with 1 second delay
+        
+        for attempt in range(max_retries):
+            try:
+                self._rate_limit_request()  # Apply rate limiting
                 
-                # If we have an author, try to find a book by that author
-                if author and author != "Unknown":
-                    for book in books:
-                        book_authors = book.get('author_name', [])
-                        for book_author in book_authors:
-                            if author.lower() in book_author.lower() or book_author.lower() in author.lower():
-                                return book
+                # First try the full title with author if provided
+                search_url = "https://openlibrary.org/search.json"
+                params = {'title': title, 'limit': 5}
                 
-                # If no author match found, return the first result
-                return books[0]
-            
-            # If no results and title has colon, try first part only
-            if ':' in title:
-                short_title = title.split(':')[0].strip()
-                
-                params = {'title': short_title, 'limit': 5}
                 if author and author != "Unknown":
                     params['author'] = author
                 
-                self._rate_limit_request()  # Rate limit the retry too
-                response = self.session.get(search_url, params=params, timeout=10)
+                response = self.session.get(search_url, params=params, timeout=15)  # Increased timeout
                 response.raise_for_status()
                 search_data = response.json()
                 
+                # If we have results, try to find the best match
                 if search_data.get('docs') and len(search_data['docs']) > 0:
                     books = search_data['docs']
                     
-                    # Again, try to match by author if provided
+                    # If we have an author, try to find a book by that author
                     if author and author != "Unknown":
                         for book in books:
                             book_authors = book.get('author_name', [])
@@ -245,59 +255,105 @@ class BookInfoEnhancer:
                                 if author.lower() in book_author.lower() or book_author.lower() in author.lower():
                                     return book
                     
+                    # If no author match found, return the first result
                     return books[0]
-            
-            return None
-            
-        except Exception as e:
-            print(f"Error searching OpenLibrary for '{title}': {e}")
-            return None
-    
+                
+                # If no results and title has colon, try first part only
+                if ':' in title:
+                    short_title = title.split(':')[0].strip()
+                    
+                    params = {'title': short_title, 'limit': 5}
+                    if author and author != "Unknown":
+                        params['author'] = author
+                    
+                    self._rate_limit_request()  # Rate limit the retry too
+                    response = self.session.get(search_url, params=params, timeout=15)
+                    response.raise_for_status()
+                    search_data = response.json()
+                    
+                    if search_data.get('docs') and len(search_data['docs']) > 0:
+                        books = search_data['docs']
+                        
+                        # Again, try to match by author if provided
+                        if author and author != "Unknown":
+                            for book in books:
+                                book_authors = book.get('author_name', [])
+                                for book_author in book_authors:
+                                    if author.lower() in book_author.lower() or book_author.lower() in author.lower():
+                                        return book
+                        
+                        return books[0]
+                
+                return None
+                
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+                if attempt < max_retries - 1:
+                    delay = base_delay * (2 ** attempt)  # Exponential backoff
+                    print(f"  ⚠️  Network error for '{title}' (attempt {attempt + 1}/{max_retries}): {e}")
+                    print(f"  ⏳ Retrying in {delay} seconds...")
+                    time.sleep(delay)
+                else:
+                    print(f"  ❌ Failed to fetch '{title}' after {max_retries} attempts: {e}")
+                    return None
+            except Exception as e:
+                print(f"Error searching OpenLibrary for '{title}': {e}")
+                return None
+
     def _get_work_details(self, work_key: str) -> Dict[str, any]:
         """
         Get detailed work information from OpenLibrary work ID.
-        
-        Args:
-            work_key: OpenLibrary work key (e.g., "/works/OL123456W")
-            
-        Returns:
-            Dict with description and subjects, or defaults if not found
+        Includes retry logic for network timeouts.
         """
+        import time
+        
         if not work_key or not work_key.startswith('/works/'):
             return {
                 'description': "No description available",
                 'subjects': []
             }
-            
-        self._rate_limit_request()  # Apply rate limiting
         
-        try:
-            work_id = work_key.replace('/works/', '')
-            work_url = f"https://openlibrary.org/works/{work_id}.json"
-            work_response = self.session.get(work_url, timeout=10)
-            
-            if work_response.status_code == 200:
-                work_data = work_response.json()
+        max_retries = 3
+        base_delay = 1
+        
+        for attempt in range(max_retries):
+            try:
+                self._rate_limit_request()  # Apply rate limiting
                 
-                # Get description
-                desc = work_data.get('description')
-                description = "No description available"
-                if isinstance(desc, dict):
-                    description = desc.get('value', "No description available")
-                elif isinstance(desc, str):
-                    description = desc
+                work_id = work_key.replace('/works/', '')
+                work_url = f"https://openlibrary.org/works/{work_id}.json"
+                work_response = self.session.get(work_url, timeout=15)
                 
-                # Get subjects from work data
-                subjects = work_data.get('subjects', [])
-                
-                return {
-                    'description': description,
-                    'subjects': subjects
-                }
+                if work_response.status_code == 200:
+                    work_data = work_response.json()
                     
-        except Exception as e:
-            print(f"Error fetching work details for {work_key}: {e}")
-            
+                    # Get description
+                    desc = work_data.get('description')
+                    description = "No description available"
+                    if isinstance(desc, dict):
+                        description = desc.get('value', "No description available")
+                    elif isinstance(desc, str):
+                        description = desc
+                    
+                    # Get subjects from work data
+                    subjects = work_data.get('subjects', [])
+                    
+                    return {
+                        'description': description,
+                        'subjects': subjects
+                    }
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+                if attempt < max_retries - 1:
+                    delay = base_delay * (2 ** attempt)
+                    print(f"  ⚠️  Network error fetching work details for {work_key} (attempt {attempt + 1}/{max_retries})")
+                    print(f"  ⏳ Retrying in {delay} seconds...")
+                    time.sleep(delay)
+                else:
+                    print(f"  ❌ Failed to fetch work details for {work_key} after {max_retries} attempts")
+                    break
+            except Exception as e:
+                print(f"Error fetching work details for {work_key}: {e}")
+                break
+                
         return {
             'description': "No description available", 
             'subjects': []
@@ -325,36 +381,35 @@ class BookInfoEnhancer:
             
         return description.strip()
     
-    def extract_themes_from_text(text: str) -> Set[str]:
+    def _extract_themes_from_text(self, text: str) -> Set[str]:
         """
-        Extract themes from text using keyword matching.
-        
-        Args:
-            text: Text to analyze for themes
-            
-        Returns:
-            Set of identified theme names
+        Extract themes from text using keyword matching with word boundaries.
         """
+        import re
         themes = set()
         theme_keywords = self._get_theme_keywords()
         text_lower = text.lower()
         
         for theme, keywords in theme_keywords.items():
-            if any(keyword in text_lower for keyword in keywords):
-                themes.add(theme)
-                
+            for keyword in keywords:
+                # Use word boundaries for single words, exact match for phrases
+                if ' ' in keyword:
+                    # Multi-word phrases - use exact match
+                    if keyword in text_lower:
+                        themes.add(theme)
+                        break
+                else:
+                    # Single words - use word boundaries to avoid partial matches
+                    pattern = r'\b' + re.escape(keyword) + r'\b'
+                    if re.search(pattern, text_lower):
+                        themes.add(theme)
+                        break
+                        
         return themes
     
     def identify_themes_from_subjects_and_description(self, subjects: List[str], description: str) -> List[str]:
         """
         Identify themes from OpenLibrary subjects and description.
-        
-        Args:
-            subjects: List of subject tags from OpenLibrary
-            description: Book description text
-            
-        Returns:
-            List of identified theme names
         """
         # Combine all text for analysis
         all_text = ' '.join(subjects + [description])
@@ -663,3 +718,5 @@ if __name__ == "__main__":
         csv_files,
         "enhanced_book_bans_combined.csv"
     )
+
+    

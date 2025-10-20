@@ -12,7 +12,7 @@ geojson_path = "./geojson/School_District_Composites_SY_2023-24_TL_24.geojson"
 geojson_data = gpd.read_file(geojson_path)
 geojson_data["geometry"] = geojson_data["geometry"].simplify(tolerance=0.01, preserve_topology=True)
 
-# Manual replacements
+# Manual replacements (original dictionary)
 replacements = {
     "Horry County Schools": "Horry County School District",
     "Lake County Schools": "Lake County School District",
@@ -31,87 +31,36 @@ replacements = {
     "Volusia County Schools": "Volusia County School District"
 }
 
-# Function to normalize district names
-def normalize_district_name(district_name, geojson_districts):
-    """Try to find a matching district using various name transformations"""
+# Load additional replacements from district_word_matches.csv
+try:
+    print("Loading district word matches...")
+    matches_df = pd.read_csv("./data/district_word_matches.csv")
     
-    # First check exact match
-    if district_name in geojson_districts:
-        return district_name
+    # Convert matches to dictionary format
+    csv_replacements = {}
+    for _, row in matches_df.iterrows():
+        missing_district = row['missing_district']
+        potential_match = row['match']
+        
+        if pd.notna(missing_district) and pd.notna(potential_match):
+            csv_replacements[missing_district] = potential_match
     
-    # Try manual replacements first
-    if district_name in replacements:
-        manual_replacement = replacements[district_name]
-        if manual_replacement in geojson_districts:
-            return manual_replacement
+    # Merge with existing replacements (manual ones take precedence)
+    all_replacements = {**csv_replacements, **replacements}
     
-    # Try automatic transformations
-    transformations = [
-        # Replace "Public Schools" with "School District"
-        lambda name: name.replace("Public Schools", "School District"),
-        
-        # Replace "Schools" with "School District" 
-        lambda name: name.replace(" Schools", " School District"),
-        
-        # Replace "School District" with "Public Schools"
-        lambda name: name.replace("School District", "Public Schools"),
-        
-        # Replace "School District" with "Schools"
-        lambda name: name.replace(" School District", " Schools"),
-        
-        # Add "Public" before "Schools"
-        lambda name: name.replace(" Schools", " Public Schools"),
-        
-        # Remove "Public" 
-        lambda name: name.replace("Public ", ""),
-        
-        # Try with/without "County"
-        lambda name: name.replace("County ", "") if "County" in name else name + " County",
-        
-        # Try adding/removing numbers and dashes
-        lambda name: name.replace(" #", " ").replace("#", " "),
-        
-        # Try with "ISD" (Independent School District)
-        lambda name: name.replace("School District", "ISD"),
-    ]
+    print(f"Loaded {len(csv_replacements)} additional district mappings from CSV")
+    print(f"Total district mappings: {len(all_replacements)}")
     
-    for transform in transformations:
-        try:
-            transformed_name = transform(district_name)
-            if transformed_name in geojson_districts:
-                return transformed_name
-        except:
-            continue
-    
-    # No match found
-    return None
+except FileNotFoundError:
+    print("district_word_matches.csv not found, using only manual replacements")
+    all_replacements = replacements
 
-# Clean district names
+# Clean district names and apply replacements
 csv_data["District"] = csv_data["District"].str.strip()
+csv_data["District"] = csv_data["District"].replace(all_replacements)
 
-# Get geojson district names for matching
-geojson_districts = set(geojson_data["NAME"].dropna().unique())
-
-# Create normalized district mapping
-print("Normalizing district names...")
-district_mapping = {}
-matched_count = 0
-total_districts = csv_data["District"].dropna().nunique()
-
-for district in csv_data["District"].dropna().unique():
-    normalized = normalize_district_name(district, geojson_districts)
-    district_mapping[district] = normalized
-    if normalized and normalized != district:
-        matched_count += 1
-        print(f"  ✅ Matched: '{district}' → '{normalized}'")
-
-print(f"Successfully matched {matched_count} additional districts")
-
-# Apply normalization
-csv_data["District_Normalized"] = csv_data["District"].map(district_mapping).fillna(csv_data["District"])
-
-# Calculate ban counts using normalized names
-district_ban_counts = csv_data["District_Normalized"].value_counts().to_dict()
+# Calculate ban counts
+district_ban_counts = csv_data["District"].value_counts().to_dict()
 
 # Initialize ban counts in geojson
 geojson_data["ban_count"] = 0
@@ -129,7 +78,8 @@ for index, row in geojson_data.iterrows():
         matched_districts += 1
         total_bans_assigned += ban_count
 
-print(f"\nMatched {matched_districts} districts with {total_bans_assigned} total bans")
+print(f"\nResults:")
+print(f"Matched {matched_districts} districts with {total_bans_assigned} total bans")
 print(f"Coverage: {(matched_districts / len(geojson_data)) * 100:.1f}% of geojson districts have data")
 
 # Save the updated geojson
@@ -139,7 +89,6 @@ print(f"Saved enhanced geojson to {output_file}")
 
 # Save summary statistics
 summary = {
-    "total_csv_districts": total_districts,
     "total_geojson_districts": len(geojson_data),
     "matched_districts": matched_districts,
     "total_bans": total_bans_assigned,
@@ -149,4 +98,4 @@ summary = {
 with open("district_matching_summary.json", "w") as f:
     json.dump(summary, f, indent=2)
 
-print(f"\nSummary saved to district_matching_summary.json")
+print(f"Summary saved to district_matching_summary.json")

@@ -70,7 +70,7 @@ export function initializeMap() {
               ${breakpoints[i]}&ndash;${breakpoints[i + 1]}<br>
             `;
           }
-
+          
           return div;
         };
 

@@ -187,10 +187,16 @@ if (result.type === 'author' && result.author_stats) {
     let tableHTML = `
       ${authorStatsHTML}
       ${bookSummaryHTML}
-      <div>
-        <h4>${result.value} - ${result.type.charAt(0).toUpperCase() + result.type.slice(1)}</h4>
-        <p>Showing ${startIndex + 1}-${Math.min(endIndex, sortedDetails.length)} of ${sortedDetails.length} results</p>
-      </div>
+      ${result.type !== 'all' ? `
+        <div>
+          <h4>${result.value} - ${result.type.charAt(0).toUpperCase() + result.type.slice(1)}</h4>
+          <p>Showing ${startIndex + 1}-${Math.min(endIndex, sortedDetails.length)} of ${sortedDetails.length} results</p>
+        </div>
+      ` : `
+        <div>
+          <p>Showing ${startIndex + 1}-${Math.min(endIndex, sortedDetails.length)} of ${sortedDetails.length} total records</p>
+        </div>
+      `}
       <div class="table-wrapper">
         <table id="results-table">
           <thead>
